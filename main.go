@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+        "html/template"
 	"strings"
 	"log"
 )
@@ -20,9 +21,25 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello astaxie!") //这个写入到w的是输出到客户端的
 }
 
+func login(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("method:", r.Method) //get request method
+	if r.Method == "GET" {
+		t, _ := template.ParseFiles("login.gtpl")
+		t.Execute(w, nil)
+	} else {
+		r.ParseForm()
+		// logic part of log in
+		fmt.Println("username:", r.Form["username"])
+		fmt.Println("password:", r.Form["password"])
+	}
+}
+
+
 func main() {
 	http.HandleFunc("/", sayhelloName) //设置访问的路由
-	err := http.ListenAndServe(":8090", nil) //设置监听的端口
+	http.HandleFunc("/login", login)
+
+        err := http.ListenAndServe(":8090", nil) //设置监听的端口
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
