@@ -1,34 +1,43 @@
 package main
 
 import (
+	"encoding/xml"
 	"fmt"
-
-        "database/sql"
-	_ "github.com/go-sql-driver/mysql"
+	"io/ioutil"
+	"os"
 )
 
-
-func main() {
-
-        db, err := sql.Open("mysql", "root:PXDN93VRKUm8TeE7@tcp(192.168.1.167:33069)/andongni?charset=utf8")
-        checkErr(err)
-
-	stmt, err := db.Prepare("INSERT INTO userinfo SET username=?,department=?,created=?")
-	checkErr(err)
-
-	res, err := stmt.Exec("astaxie", "研发部门", "2012-12-09")
-	checkErr(err)
-
-	id, err := res.LastInsertId()
-	checkErr(err)
-
-	fmt.Println(id)
-	
-	db.Close()
+type Recurlyservers struct {
+	XMLName     xml.Name `xml:"servers"`
+	Version     string   `xml:"version,attr"`
+	Svs         []server `xml:"server"`
+	Description string   `xml:",innerxml"`
 }
 
-func checkErr(err error) {
+type server struct {
+	XMLName    xml.Name `xml:"server"`
+	ServerName string   `xml:"serverName"`
+	ServerIP   string   `xml:"serverIP"`
+}
+
+func main() {
+	file, err := os.Open("servers.xml") // For read access.		
 	if err != nil {
-		panic(err)
+		fmt.Printf("error: %v", err)
+		return
 	}
+	defer file.Close()
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	v := Recurlyservers{}
+	err = xml.Unmarshal(data, &v)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+
+	fmt.Println(v)
 }
